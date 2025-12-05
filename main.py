@@ -21,6 +21,30 @@ def ping(adr, count=3):
         l[int(m.group('seq').strip()) - 1] = float(m.group('time').strip())
     return l
 
+def ttfb(adr, count=3):
+    times = []
+    timestamps = []
+
+    for i in range(count):
+        try:
+            start = time.time()
+            response = requests.get(adr, stream=True)
+            response.raise_for_status()
+
+            for chunk in response.iter_content(chunk_size=1):
+                if chunk:
+                    ttfb = (time.time() - start) * 1000
+                    break
+
+            times.append(ttfb)
+            timestamps.append(datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+
+            time.sleep(SLEEP)
+        except KeyboardInterrupt:
+            return (times, timestamps)
+
+    return (times, timestamps)
+
 def req(adr, count=3):
     l = [] #2000 for i in range(count)]
     t = []
@@ -35,9 +59,11 @@ def req(adr, count=3):
             return (l, t)
     return (l, t)
 
-def main(adr='1.1.1.1', ping=False):
-    if ping:
+def main(adr='1.1.1.1', p_ping=False, p_ttfb=True):
+    if p_ping:
         (y, y) = ping(adr, count=COUNT)
+    elif p_ttfb:
+        (y, t) = ttfb(adr, count=COUNT)
     else:
         (y, t) = req(adr, count=COUNT)
     mean = sum(y)/len(y) 
